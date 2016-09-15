@@ -99,4 +99,8 @@ dieList id model =
     li [] [Dice.view model |> App.map (DiceMsg id)]
 
 subscriptions : Model -> Sub Msg
-subscriptions model = Sub.none
+subscriptions model =
+    let subMap id die =
+            (Dice.subscriptions die) |> Sub.map (DiceMsg id)
+    in
+        Array.indexedMap subMap model |> Array.toList |> Sub.batch
