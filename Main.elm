@@ -5,6 +5,11 @@ import Html.App as App
 import Dice as Dice
 import Array exposing (Array)
 
+minDice = 2
+maxDice = 8
+
+initialDice = 4
+
 main = App.program { init = init
                    , view = view
                    , update = update
@@ -45,14 +50,19 @@ update msg model =
                 Nothing -> (model, Cmd.none)
         AddDie ->
             let (newDie, cmd) = Dice.init
+                len = Array.length model
             in
-                (Array.push newDie model
-                , Cmd.map (model |> Array.length |> DiceMsg) cmd
-                )
+                if len < maxDice
+                then
+                    (Array.push newDie model
+                    , Cmd.map (model |> Array.length |> DiceMsg) cmd
+                    )
+                else
+                    (model, Cmd.none)
         RemoveDie ->
             let len = Array.length model
             in
-                if len > 4
+                if len > minDice
                 then
                     ( Array.slice 0 (len-1) model
                     , Cmd.none
@@ -62,18 +72,22 @@ update msg model =
 
 init : (Model, Cmd Msg)
 init =
-    let inits = Array.repeat 4 Dice.init
+    let inits = Array.repeat initialDice Dice.init
     in
         packUpdate inits
 
 view : Model -> Html Msg
 view model =
     body []
-    [ button [ onClick RemoveDie, disabled (Array.length model <= 4) ]
+    [ button [ onClick RemoveDie
+             , disabled (Array.length model <= minDice)
+             ]
         [ text "-" ]
     , ul [ class "dicelist" ]
         (Array.indexedMap dieList model |> Array.toList)
-    , button [onClick AddDie ]
+    , button [onClick AddDie
+             , disabled (Array.length model >= maxDice)
+             ]
         [ text "+" ]
     , button [ onClick RollAll ]
         [text (toString (aggregateResult model)) ]
