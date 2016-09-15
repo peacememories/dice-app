@@ -3,7 +3,8 @@ module Dice exposing (
     Msg(..),
     update,
     init,
-    view )
+    view,
+    subscriptions )
 
 import Random as Random
 import Html exposing (Html, button, text)
