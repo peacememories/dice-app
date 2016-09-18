@@ -30,7 +30,10 @@ update msg =
   )
 
 rollAll : Updater Model Msg
-rollAll = command <| Array.toIndexedList >> List.map (fst >> rollDie) >> Cmd.batch
+rollAll = 
+  let indices = Array.toIndexedList >> List.map fst
+  in
+    command (indices >> List.map rollDie >> Cmd.batch)
 
 rollDie : Id -> Cmd Msg
 rollDie id = Random.generate (NewRoll id) rng
