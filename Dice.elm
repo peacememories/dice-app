@@ -29,6 +29,7 @@ type Msg val
     = Roll Id
     | RollAll
     | NewRoll Id val
+    | NewDice (List val)
     | AddDie
     | RemoveDie
 
@@ -52,13 +53,9 @@ update spec msg model =
 
         RollAll ->
             ( model
-            , let
-                indexGen id =
-                    Random.generate (NewRoll id) spec.gen
-              in
-                Array.initialize (Array.length model) indexGen
-                    |> Array.toList
-                    |> Cmd.batch
+            , spec.gen
+                |> Random.list (Array.length model)
+                |> Random.generate NewDice
             )
 
         AddDie ->
@@ -78,6 +75,9 @@ update spec msg model =
                 ( Array.Extra.resizelRepeat newSize spec.init model
                 , Cmd.none
                 )
+
+        NewDice newDice ->
+            ( Array.fromList newDice, Cmd.none )
 
 
 menu : DiceSpec val -> Model val -> Html (Msg val)
