@@ -13,7 +13,6 @@ type alias DiceSpec val =
     { view : List (Attribute (Msg val)) -> val -> Html (Msg val)
     , gen : Generator val
     , sum : List val -> Int
-    , init : val
     }
 
 
@@ -30,6 +29,7 @@ type Msg val
     | RollAll
     | NewRoll Id val
     | NewDice (List val)
+    | NewDie val
     | AddDie
     | RemoveDie
 
@@ -47,37 +47,33 @@ update spec msg model =
             )
 
         NewRoll id value ->
-            ( Array.Extra.update id (always value) model
+            ( Array.set id value model
             , Cmd.none
             )
 
         RollAll ->
-            ( model
-            , spec.gen
-                |> Random.list (Array.length model)
-                |> Random.generate NewDice
-            )
+            init spec (Array.length model)
 
         AddDie ->
-            let
-                newSize =
-                    (Array.length model) + 1
-            in
-                ( Array.Extra.resizelRepeat newSize spec.init model
-                , Cmd.none
-                )
+            ( model
+            , Random.generate NewDie spec.gen
+            )
 
         RemoveDie ->
-            let
+            (let
                 newSize =
                     (Array.length model) - 1
-            in
-                ( Array.Extra.resizelRepeat newSize spec.init model
+             in
+                ( Array.Extra.removeAt newSize model
                 , Cmd.none
                 )
+            )
 
         NewDice newDice ->
             ( Array.fromList newDice, Cmd.none )
+
+        NewDie value ->
+            ( Array.push value model, Cmd.none )
 
 
 menu : DiceSpec val -> Model val -> Html (Msg val)
@@ -112,15 +108,19 @@ view spec model =
             ]
 
 
-init : DiceSpec val -> ( Model val, Cmd (Msg val) )
-init spec =
-    ( Array.repeat 4 spec.init, Cmd.none )
+init : DiceSpec val -> Int -> ( Model val, Cmd (Msg val) )
+init spec count =
+    ( Array.empty
+    , spec.gen
+        |> Random.list count
+        |> Random.generate NewDice
+    )
 
 
 program : DiceSpec val -> Program Never
 program spec =
     App.program
-        { init = init spec
+        { init = init spec 4
         , update = update spec
         , view = view spec
         , subscriptions = (always Sub.none)

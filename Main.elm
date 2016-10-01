@@ -61,16 +61,10 @@ sum =
         List.foldl add 0
 
 
-init : Die
-init =
-    Empty
-
-
 main : Program Never
 main =
     Dice.program
-        { init = init
-        , gen = gen
+        { gen = gen
         , view = view
         , sum = sum
         }
