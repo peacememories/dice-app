@@ -1,7 +1,7 @@
 {
     "version": "0.1.0",
     "summary": "A dice rolling app",
-    "repository": "https://github.com/peacememories/dice-app",
+    "repository": "https://github.com/peacememories/dice-app.git",
     "license": "BSD3",
     "source-directories": [
         "."
