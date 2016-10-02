@@ -44,21 +44,17 @@ view attrs value =
             [ H.text valName ]
 
 
-sum : List Die -> Int
-sum =
-    let
-        add value aggregate =
-            case value of
-                Plus ->
-                    aggregate + 1
+toInt : Die -> Int
+toInt value =
+    case value of
+        Plus ->
+            1
 
-                Minus ->
-                    aggregate - 1
+        Minus ->
+            -1
 
-                Empty ->
-                    aggregate
-    in
-        List.foldl add 0
+        Empty ->
+            0
 
 
 main : Program Never
@@ -66,5 +62,5 @@ main =
     Dice.program
         { gen = gen
         , view = view
-        , sum = sum
+        , toInt = toInt
         }

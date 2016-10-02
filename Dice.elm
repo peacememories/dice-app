@@ -12,7 +12,7 @@ import Array.Extra
 type alias DiceSpec val =
     { view : List (Attribute (Msg val)) -> val -> Html (Msg val)
     , gen : Generator val
-    , sum : List val -> Int
+    , toInt : val -> Int
     }
 
 
@@ -76,6 +76,13 @@ update spec msg model =
             ( Array.push value model, Cmd.none )
 
 
+sum : DiceSpec val -> List val -> Int
+sum spec values =
+    values
+        |> List.map spec.toInt
+        |> List.foldl (+) 0
+
+
 menu : DiceSpec val -> Model val -> Html (Msg val)
 menu spec model =
     H.menu []
@@ -83,7 +90,7 @@ menu spec model =
         , H.button [ E.onClick RollAll ]
             [ H.text
                 (Array.toList model
-                    |> spec.sum
+                    |> sum spec
                     |> toString
                 )
             ]
