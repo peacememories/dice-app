@@ -62,7 +62,12 @@ update gen msg model =
             )
 
         RollAll ->
-            init gen (Array.length model)
+            ( model
+            , model
+                |> Array.length
+                |> init gen
+                |> snd
+            )
 
         AddDie ->
             ( model
