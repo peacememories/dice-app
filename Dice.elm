@@ -1,4 +1,4 @@
-module Dice exposing (program, DiceSpec, Msg)
+module Dice exposing (program, DiceSpec)
 
 import Html as H exposing (Html, Attribute)
 import Html.Attributes as A
@@ -9,41 +9,51 @@ import Array exposing (Array)
 import Array.Extra
 
 
+type alias Element msg =
+    List (Attribute msg) -> Html msg
+
+
 type alias DiceSpec val =
-    { view : List (Attribute (Msg val)) -> val -> Html (Msg val)
+    { view : val -> Element Msg
     , gen : Generator val
     , toInt : val -> Int
     }
 
 
-type alias Model val =
-    Array val
+type alias Die =
+    { view : Element Msg
+    , value : Int
+    }
+
+
+type alias Model =
+    Array Die
 
 
 type alias Id =
     Int
 
 
-type Msg val
+type Msg
     = Roll Id
     | RollAll
-    | NewRoll Id val
-    | NewDice (List val)
-    | NewDie val
+    | NewRoll Id Die
+    | NewDice (List Die)
+    | NewDie Die
     | AddDie
     | RemoveDie
 
 
 update :
-    DiceSpec val
-    -> Msg val
-    -> Model val
-    -> ( Model val, Cmd (Msg val) )
-update spec msg model =
+    Generator Die
+    -> Msg
+    -> Model
+    -> ( Model, Cmd Msg )
+update gen msg model =
     case msg of
         Roll id ->
             ( model
-            , Random.generate (NewRoll id) spec.gen
+            , Random.generate (NewRoll id) gen
             )
 
         NewRoll id value ->
@@ -52,11 +62,11 @@ update spec msg model =
             )
 
         RollAll ->
-            init spec (Array.length model)
+            init gen (Array.length model)
 
         AddDie ->
             ( model
-            , Random.generate NewDie spec.gen
+            , Random.generate NewDie gen
             )
 
         RemoveDie ->
@@ -76,21 +86,21 @@ update spec msg model =
             ( Array.push value model, Cmd.none )
 
 
-sum : DiceSpec val -> List val -> Int
-sum spec values =
-    values
-        |> List.map spec.toInt
-        |> List.foldl (+) 0
+sum : List Die -> Int
+sum =
+    List.map .value
+        >> List.foldl (+) 0
 
 
-menu : DiceSpec val -> Model val -> Html (Msg val)
-menu spec model =
+menu : Model -> Html Msg
+menu model =
     H.menu []
         [ H.button [ E.onClick RemoveDie ] [ H.text "-" ]
         , H.button [ E.onClick RollAll ]
             [ H.text
-                (Array.toList model
-                    |> sum spec
+                (model
+                    |> Array.toList
+                    |> sum
                     |> toString
                 )
             ]
@@ -98,27 +108,28 @@ menu spec model =
         ]
 
 
-view : DiceSpec val -> Model val -> Html (Msg val)
-view spec model =
+view : Model -> Html Msg
+view model =
     let
-        indexedDie ( id, value ) =
-            spec.view [ E.onClick (Roll id) ] value
+        indexedDie ( id, die ) =
+            die.view [ E.onClick (Roll id) ]
     in
         H.div []
             [ H.ul
                 [ A.class "dice" ]
-                (Array.toIndexedList model
+                (model
+                    |> Array.toIndexedList
                     |> List.map indexedDie
                     |> List.map (\el -> H.li [] [ el ])
                 )
-            , menu spec model
+            , menu model
             ]
 
 
-init : DiceSpec val -> Int -> ( Model val, Cmd (Msg val) )
-init spec count =
+init : Generator Die -> Int -> ( Model, Cmd Msg )
+init gen count =
     ( Array.empty
-    , spec.gen
+    , gen
         |> Random.list count
         |> Random.generate NewDice
     )
@@ -126,9 +137,22 @@ init spec count =
 
 program : DiceSpec val -> Program Never
 program spec =
+    let
+        die value =
+            { view = spec.view value
+            , value = spec.toInt value
+            }
+    in
+        spec.gen
+            |> Random.map die
+            |> program_
+
+
+program_ : Generator Die -> Program Never
+program_ gen =
     App.program
-        { init = init spec 4
-        , update = update spec
-        , view = view spec
+        { init = init gen 4
+        , update = update gen
+        , view = view
         , subscriptions = (always Sub.none)
         }

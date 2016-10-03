@@ -19,8 +19,8 @@ gen =
         |> Random.map (Maybe.withDefault Empty)
 
 
-view : List (Attribute msg) -> Die -> Html msg
-view attrs value =
+view : Die -> List (Attribute msg) -> Html msg
+view value attrs =
     let
         ( valName, className ) =
             case value of
