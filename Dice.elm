@@ -90,12 +90,6 @@ update gen msg model =
             ( Array.push value model, Cmd.none )
 
 
-sum : List Die -> Int
-sum =
-    List.map .value
-        >> List.foldl (+) 0
-
-
 menu : Model -> Html Msg
 menu model =
     H.menu []
@@ -104,7 +98,8 @@ menu model =
             [ H.text
                 (model
                     |> Array.toList
-                    |> sum
+                    |> List.map .value
+                    |> List.sum
                     |> toString
                 )
             ]
