@@ -65,8 +65,7 @@ update gen msg model =
             ( model
             , model
                 |> Array.length
-                |> init gen
-                |> snd
+                |> roll gen
             )
 
         AddDie ->
@@ -130,13 +129,16 @@ view model =
             , menu model
             ]
 
+roll : Generator Die -> Int -> Cmd Msg
+roll gen count =
+    gen
+        |> Random.list count
+        |> Random.generate NewDice
 
 init : Generator Die -> Int -> ( Model, Cmd Msg )
 init gen count =
     ( Array.empty
-    , gen
-        |> Random.list count
-        |> Random.generate NewDice
+    , roll gen count
     )
 
 
